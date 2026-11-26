@@ -15,6 +15,10 @@ export interface MemoryPhoto {
 }
 
 export const SURPRISE_CONFIG = {
+  // Tanggal & jam mulai website bisa dibuka (format ISO WIB +07:00)
+  // Contoh: '2026-12-04T00:00:00+07:00' — kosongkan '' jika ingin langsung bisa dibuka kapan saja
+  unlockAt: '2026-12-04T00:00:00+07:00',
+
   // 8 digit tanggal spesial untuk membuka gerbang taman rahasia
   passcode: '24022024',
   passcodeHint: 'Masukkan 8 digit tanggal spesial kita (DDMMYYYY)',

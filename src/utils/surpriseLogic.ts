@@ -33,6 +33,99 @@ export function validatePasscode(input: string, target: string): {
   };
 }
 
+export interface UnlockScheduleState {
+  isScheduleLocked: boolean;
+  targetMs: number | null;
+  remainingMs: number;
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  targetDateLabel: string;
+  targetTimeLabel: string;
+}
+
+/**
+ * Mengevaluasi apakah gerbang kejutan sudah mencapai tanggal & jam buka yang ditentukan.
+ */
+export function evaluateUnlockSchedule(
+  unlockAtIso?: string,
+  nowMs: number = Date.now()
+): UnlockScheduleState {
+  if (!unlockAtIso || !unlockAtIso.trim()) {
+    return {
+      isScheduleLocked: false,
+      targetMs: null,
+      remainingMs: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      targetDateLabel: '',
+      targetTimeLabel: ''
+    };
+  }
+
+  const targetMs = Date.parse(unlockAtIso.trim());
+  if (Number.isNaN(targetMs)) {
+    return {
+      isScheduleLocked: false,
+      targetMs: null,
+      remainingMs: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      targetDateLabel: '',
+      targetTimeLabel: ''
+    };
+  }
+
+  const remainingMs = Math.max(0, targetMs - nowMs);
+  const isScheduleLocked = nowMs < targetMs;
+
+  const days = Math.floor(remainingMs / 86_400_000);
+  const hours = Math.floor((remainingMs % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((remainingMs % 3_600_000) / 60_000);
+  const seconds = Math.floor((remainingMs % 60_000) / 1000);
+
+  const dateObj = new Date(targetMs);
+  let targetDateLabel = '';
+  let targetTimeLabel = '';
+
+  try {
+    targetDateLabel = new Intl.DateTimeFormat('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Asia/Jakarta'
+    }).format(dateObj);
+
+    const hm = new Intl.DateTimeFormat('id-ID', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'Asia/Jakarta'
+    }).format(dateObj);
+    targetTimeLabel = `${hm} WIB`;
+  } catch {
+    targetDateLabel = dateObj.toISOString().slice(0, 10);
+    targetTimeLabel = `${dateObj.toISOString().slice(11, 16)} UTC`;
+  }
+
+  return {
+    isScheduleLocked,
+    targetMs,
+    remainingMs,
+    days,
+    hours,
+    minutes,
+    seconds,
+    targetDateLabel,
+    targetTimeLabel
+  };
+}
+
 /**
  * Memilih suara pria (cowok) paling natural dari daftar SpeechSynthesisVoice.
  * Memprioritaskan bahasa Indonesia pria (mis. Ardi, Andika, Rizky, Budi),
